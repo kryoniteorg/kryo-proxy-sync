@@ -20,12 +20,15 @@ allprojects {
 
     repositories {
         mavenCentral()
+        maven(url = "https://jitpack.io")
         maven(url = "https://nexus.velocitypowered.com/repository/maven-public/")
     }
 
     dependencies {
         val junitVersion = "5.8.2"
         val velocityVersion = "3.1.0"
+
+        implementation("com.github.kryoniteorg:kryo-messaging:2.0.1")
 
         compileOnly("com.velocitypowered:velocity-api:$velocityVersion")
         annotationProcessor("com.velocitypowered:velocity-api:$velocityVersion")
@@ -36,6 +39,7 @@ allprojects {
         testImplementation("org.junit.jupiter:junit-jupiter-api:$junitVersion")
         testImplementation("org.junit.jupiter:junit-jupiter-engine:$junitVersion")
         testImplementation("org.mockito:mockito-junit-jupiter:4.2.0")
+        testImplementation("org.awaitility:awaitility:4.1.1")
     }
 
     tasks.test {
