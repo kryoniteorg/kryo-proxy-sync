@@ -29,6 +29,8 @@ allprojects {
         val velocityVersion = "3.1.0"
 
         implementation("com.github.kryoniteorg:kryo-messaging:2.0.1")
+        implementation("org.mariadb.jdbc:mariadb-java-client:2.7.4")
+        implementation("com.zaxxer:HikariCP:5.0.1")
 
         compileOnly("com.velocitypowered:velocity-api:$velocityVersion")
         annotationProcessor("com.velocitypowered:velocity-api:$velocityVersion")

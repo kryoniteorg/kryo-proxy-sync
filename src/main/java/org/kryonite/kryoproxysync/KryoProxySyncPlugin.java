@@ -6,7 +6,11 @@ import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
 import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.proxy.ProxyServer;
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
 import java.io.IOException;
+import java.sql.DriverManager;
+import java.sql.SQLException;
 import java.util.List;
 import java.util.concurrent.TimeoutException;
 import lombok.AllArgsConstructor;
@@ -16,7 +20,11 @@ import org.kryonite.kryomessaging.service.DefaultActiveMqConnectionFactory;
 import org.kryonite.kryomessaging.service.DefaultMessagingService;
 import org.kryonite.kryoproxysync.listener.ProxyPingListener;
 import org.kryonite.kryoproxysync.messaging.MessagingController;
+import org.kryonite.kryoproxysync.persistence.repository.ServerPingRepository;
+import org.kryonite.kryoproxysync.persistence.repository.impl.MariaDbServerPingRepository;
 import org.kryonite.kryoproxysync.playercount.PlayerCountManager;
+import org.kryonite.kryoproxysync.serverping.ServerPingManager;
+import org.mariadb.jdbc.Driver;
 
 @Slf4j
 @AllArgsConstructor
@@ -25,6 +33,7 @@ public class KryoProxySyncPlugin {
 
   private final ProxyServer server;
   private MessagingService messagingService;
+  private HikariDataSource hikariDataSource;
 
   @Inject
   public KryoProxySyncPlugin(ProxyServer server) {
@@ -42,7 +51,18 @@ public class KryoProxySyncPlugin {
       return;
     }
 
-    server.getEventManager().register(this, new ProxyPingListener(playerCountManager));
+    ServerPingRepository serverPingRepository;
+    try {
+      setupHikariDataSource();
+      serverPingRepository = new MariaDbServerPingRepository(hikariDataSource);
+    } catch (SQLException exception) {
+      log.error("Failed to setup ServerPingRepository", exception);
+      return;
+    }
+
+    ServerPingManager serverPingManager = new ServerPingManager(serverPingRepository);
+    serverPingManager.setup();
+    server.getEventManager().register(this, new ProxyPingListener(playerCountManager, serverPingManager));
   }
 
   private void setupMessagingController(PlayerCountManager playerCountManager)
@@ -58,6 +78,15 @@ public class KryoProxySyncPlugin {
 
     messagingController = new MessagingController(messagingService, playerCountManager, server, getEnv("SERVER_NAME"));
     messagingController.setupPlayerCountChanged();
+  }
+
+  private void setupHikariDataSource() throws SQLException {
+    if (hikariDataSource == null) {
+      DriverManager.registerDriver(new Driver());
+      HikariConfig hikariConfig = new HikariConfig();
+      hikariConfig.setJdbcUrl(getEnv("CONNECTION_STRING"));
+      hikariDataSource = new HikariDataSource(hikariConfig);
+    }
   }
 
   private String getEnv(String name) {
