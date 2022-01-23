@@ -26,7 +26,7 @@ public class ProxyPingListener {
 
     if (!serverPingEntity.getSamplePlayers().isEmpty()) {
       serverPingBuilder.samplePlayers(serverPingEntity.getSamplePlayers().stream()
-          .map((samplePlayer) -> new ServerPing.SamplePlayer(samplePlayer, UUID.randomUUID()))
+          .map(samplePlayer -> new ServerPing.SamplePlayer(samplePlayer, UUID.randomUUID()))
           .toList()
           .toArray(ServerPing.SamplePlayer[]::new));
     }
