@@ -33,8 +33,9 @@ public class MessagingController {
   public void setupPlayerCountChanged() throws IOException {
     messagingService.setupExchange(PLAYER_COUNT_CHANGED_EXCHANGE, BuiltinExchangeType.FANOUT);
 
-    messagingService.bindQueueToExchange(serverName, PLAYER_COUNT_CHANGED_EXCHANGE);
-    messagingService.startConsuming(serverName, new PlayerCountChangedConsumer(playerCountManager),
+    String queue = PLAYER_COUNT_CHANGED_EXCHANGE + "_" + serverName;
+    messagingService.bindQueueToExchange(queue, PLAYER_COUNT_CHANGED_EXCHANGE);
+    messagingService.startConsuming(queue, new PlayerCountChangedConsumer(playerCountManager),
         PlayerCountChanged.class);
 
     executorService.scheduleAtFixedRate(() -> {
@@ -50,8 +51,9 @@ public class MessagingController {
   public void setupMaintenanceChanged() throws IOException {
     messagingService.setupExchange(MAINTENANCE_CHANGED_EXCHANGE, BuiltinExchangeType.FANOUT);
 
-    messagingService.bindQueueToExchange(serverName, MAINTENANCE_CHANGED_EXCHANGE);
-    messagingService.startConsuming(serverName, new MaintenanceChangedConsumer(maintenanceManager),
+    String queue = MAINTENANCE_CHANGED_EXCHANGE + "_" + serverName;
+    messagingService.bindQueueToExchange(queue, MAINTENANCE_CHANGED_EXCHANGE);
+    messagingService.startConsuming(queue, new MaintenanceChangedConsumer(maintenanceManager),
         MaintenanceChanged.class);
   }
 

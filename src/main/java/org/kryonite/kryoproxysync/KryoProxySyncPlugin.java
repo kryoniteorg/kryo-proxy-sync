@@ -96,6 +96,7 @@ public class KryoProxySyncPlugin {
         getEnv("SERVER_NAME")
     );
     messagingController.setupPlayerCountChanged();
+    messagingController.setupMaintenanceChanged();
 
     return messagingController;
   }

@@ -1,5 +1,6 @@
 package org.kryonite.kryoproxysync.listener;
 
+import com.velocitypowered.api.event.PostOrder;
 import com.velocitypowered.api.event.ResultedEvent;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.connection.LoginEvent;
@@ -16,7 +17,7 @@ public class PlayerJoinListener {
 
   private final MaintenanceManager maintenanceManager;
 
-  @Subscribe
+  @Subscribe(order = PostOrder.EARLY)
   public void onPlayerLogin(LoginEvent event) {
     if (!maintenanceManager.isMaintenance()) {
       return;

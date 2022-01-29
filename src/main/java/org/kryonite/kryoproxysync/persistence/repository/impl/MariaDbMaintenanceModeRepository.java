@@ -5,8 +5,10 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import lombok.extern.slf4j.Slf4j;
 import org.kryonite.kryoproxysync.persistence.repository.MaintenanceRepository;
 
+@Slf4j
 public class MariaDbMaintenanceModeRepository implements MaintenanceRepository {
 
   protected static final String CREATE_MAINTENANCE_TABLE =
@@ -52,7 +54,8 @@ public class MariaDbMaintenanceModeRepository implements MaintenanceRepository {
          PreparedStatement preparedStatement = connection.prepareStatement(UPDATE_MAINTENANCE)) {
       preparedStatement.setBoolean(1, enabled);
 
-      preparedStatement.executeUpdate();
+      int i = preparedStatement.executeUpdate();
+      log.info("Updated rows: " + i);
     }
   }
 }
