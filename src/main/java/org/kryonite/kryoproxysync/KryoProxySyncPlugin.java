@@ -2,6 +2,8 @@ package org.kryonite.kryoproxysync;
 
 import com.google.inject.Inject;
 import com.rabbitmq.client.Address;
+import com.velocitypowered.api.command.CommandMeta;
+import com.velocitypowered.api.event.EventManager;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
 import com.velocitypowered.api.plugin.Plugin;
@@ -18,9 +20,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.kryonite.kryomessaging.api.MessagingService;
 import org.kryonite.kryomessaging.service.DefaultActiveMqConnectionFactory;
 import org.kryonite.kryomessaging.service.DefaultMessagingService;
+import org.kryonite.kryoproxysync.command.MaintenanceCommand;
+import org.kryonite.kryoproxysync.listener.PlayerJoinListener;
 import org.kryonite.kryoproxysync.listener.ProxyPingListener;
+import org.kryonite.kryoproxysync.maintenance.MaintenanceManager;
 import org.kryonite.kryoproxysync.messaging.MessagingController;
+import org.kryonite.kryoproxysync.persistence.repository.MaintenanceRepository;
 import org.kryonite.kryoproxysync.persistence.repository.ServerPingRepository;
+import org.kryonite.kryoproxysync.persistence.repository.impl.MariaDbMaintenanceModeRepository;
 import org.kryonite.kryoproxysync.persistence.repository.impl.MariaDbServerPingRepository;
 import org.kryonite.kryoproxysync.playercount.PlayerCountManager;
 import org.kryonite.kryoproxysync.serverping.ServerPingManager;
@@ -28,7 +35,7 @@ import org.mariadb.jdbc.Driver;
 
 @Slf4j
 @AllArgsConstructor
-@Plugin(id = "kryo-proxy-sync", name = "Kryo Proxy Sync", authors = "Kryonite Labs", version = "0.1.0")
+@Plugin(id = "kryo-proxy-sync", name = "Kryo Proxy Sync", authors = "Kryonite Labs", version = "0.2.0")
 public class KryoProxySyncPlugin {
 
   private final ProxyServer server;
@@ -42,32 +49,37 @@ public class KryoProxySyncPlugin {
 
   @Subscribe
   public void onInitialize(ProxyInitializeEvent event) {
-    PlayerCountManager playerCountManager = new PlayerCountManager();
-
+    ServerPingRepository serverPingRepository;
+    MaintenanceRepository maintenanceRepository;
     try {
-      setupMessagingController(playerCountManager);
+      setupHikariDataSource();
+      serverPingRepository = new MariaDbServerPingRepository(hikariDataSource);
+      maintenanceRepository = new MariaDbMaintenanceModeRepository(hikariDataSource);
+    } catch (SQLException exception) {
+      log.error("Failed to setup repositories", exception);
+      return;
+    }
+
+    PlayerCountManager playerCountManager = new PlayerCountManager();
+    MaintenanceManager maintenanceManager = new MaintenanceManager(server, maintenanceRepository);
+
+    MessagingController messagingController;
+    try {
+      messagingController = setupMessagingController(playerCountManager, maintenanceManager);
     } catch (IOException | TimeoutException exception) {
       log.error("Failed to setup MessagingService", exception);
       return;
     }
 
-    ServerPingRepository serverPingRepository;
-    try {
-      setupHikariDataSource();
-      serverPingRepository = new MariaDbServerPingRepository(hikariDataSource);
-    } catch (SQLException exception) {
-      log.error("Failed to setup ServerPingRepository", exception);
-      return;
-    }
+    ServerPingManager serverPingManager = setupServerPingManager(serverPingRepository);
 
-    ServerPingManager serverPingManager = new ServerPingManager(serverPingRepository);
-    serverPingManager.setup();
-    server.getEventManager().register(this, new ProxyPingListener(playerCountManager, serverPingManager));
+    setupListener(playerCountManager, serverPingManager, maintenanceManager);
+    setupCommands(maintenanceRepository, messagingController);
   }
 
-  private void setupMessagingController(PlayerCountManager playerCountManager)
+  private MessagingController setupMessagingController(PlayerCountManager playerCountManager,
+                                                       MaintenanceManager maintenanceManager)
       throws IOException, TimeoutException {
-    MessagingController messagingController;
     if (messagingService == null) {
       messagingService = new DefaultMessagingService(new DefaultActiveMqConnectionFactory(
           List.of(Address.parseAddress(getEnv("RABBITMQ_ADDRESS"))),
@@ -76,8 +88,17 @@ public class KryoProxySyncPlugin {
       ));
     }
 
-    messagingController = new MessagingController(messagingService, playerCountManager, server, getEnv("SERVER_NAME"));
+    MessagingController messagingController = new MessagingController(
+        messagingService,
+        playerCountManager,
+        maintenanceManager,
+        server,
+        getEnv("SERVER_NAME")
+    );
     messagingController.setupPlayerCountChanged();
+    messagingController.setupMaintenanceChanged();
+
+    return messagingController;
   }
 
   private void setupHikariDataSource() throws SQLException {
@@ -96,5 +117,24 @@ public class KryoProxySyncPlugin {
     }
 
     return connectionString;
+  }
+
+  private ServerPingManager setupServerPingManager(ServerPingRepository serverPingRepository) {
+    ServerPingManager serverPingManager = new ServerPingManager(serverPingRepository);
+    serverPingManager.setup();
+    return serverPingManager;
+  }
+
+  private void setupListener(PlayerCountManager playerCountManager, ServerPingManager serverPingManager,
+                             MaintenanceManager maintenanceManager) {
+    EventManager eventManager = server.getEventManager();
+    eventManager.register(this, new ProxyPingListener(playerCountManager, serverPingManager));
+    eventManager.register(this, new PlayerJoinListener(maintenanceManager));
+  }
+
+  private void setupCommands(MaintenanceRepository maintenanceRepository, MessagingController messagingController) {
+    CommandMeta maintenance = server.getCommandManager().metaBuilder("maintenance").build();
+    server.getCommandManager().register(maintenance,
+        new MaintenanceCommand(maintenanceRepository, messagingController));
   }
 }
