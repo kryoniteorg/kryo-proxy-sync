@@ -48,7 +48,6 @@ class MaintenanceManagerTest {
   @Test
   void shouldNotDisconnectPlayers_WhenMaintenanceEnabledButHasPermission() {
     // Arrange
-    boolean maintenance = true;
     Player player = mock(Player.class);
     when(player.hasPermission(MaintenanceManager.MAINTENANCE_PERMISSION)).thenReturn(false);
     when(player.hasPermission(MaintenanceManager.MAINTENANCE_BYPASS_PERMISSION)).thenReturn(true);
@@ -56,7 +55,7 @@ class MaintenanceManagerTest {
     when(proxyServerMock.getAllPlayers()).thenReturn(List.of(player));
 
     // Act
-    testee.updateMaintenance(maintenance);
+    testee.updateMaintenance(true);
 
     // Assert
     verify(player, never()).disconnect(any());
