@@ -58,9 +58,10 @@ class MessagingControllerTest {
 
     // Assert
     verify(messagingServiceMock).setupExchange(PLAYER_COUNT_CHANGED_EXCHANGE, BuiltinExchangeType.FANOUT);
-    verify(messagingServiceMock).bindQueueToExchange(serverName, PLAYER_COUNT_CHANGED_EXCHANGE);
-    verify(messagingServiceMock).startConsuming(eq(serverName), any(PlayerCountChangedConsumer.class),
-        eq(PlayerCountChanged.class));
+    verify(messagingServiceMock)
+        .bindQueueToExchange(PLAYER_COUNT_CHANGED_EXCHANGE + "_" + serverName, PLAYER_COUNT_CHANGED_EXCHANGE);
+    verify(messagingServiceMock).startConsuming(eq(PLAYER_COUNT_CHANGED_EXCHANGE + "_" + serverName),
+        any(PlayerCountChangedConsumer.class), eq(PlayerCountChanged.class));
   }
 
   @Test
@@ -81,9 +82,10 @@ class MessagingControllerTest {
 
     // Assert
     verify(messagingServiceMock).setupExchange(MAINTENANCE_CHANGED_EXCHANGE, BuiltinExchangeType.FANOUT);
-    verify(messagingServiceMock).bindQueueToExchange(serverName, MAINTENANCE_CHANGED_EXCHANGE);
-    verify(messagingServiceMock).startConsuming(eq(serverName), any(MaintenanceChangedConsumer.class),
-        eq(MaintenanceChanged.class));
+    verify(messagingServiceMock)
+        .bindQueueToExchange(MAINTENANCE_CHANGED_EXCHANGE + "_" + serverName, MAINTENANCE_CHANGED_EXCHANGE);
+    verify(messagingServiceMock).startConsuming(eq(MAINTENANCE_CHANGED_EXCHANGE + "_" + serverName),
+        any(MaintenanceChangedConsumer.class), eq(MaintenanceChanged.class));
   }
 
   @Test
