@@ -8,14 +8,14 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.kryonite.kryoproxysync.persistence.entity.ServerPingEntity;
-import org.kryonite.kryoproxysync.persistence.repository.ServerPingRepository;
+import org.kryonite.kryoproxysync.persistence.repository.ConfigRepository;
 
 @Slf4j
 @RequiredArgsConstructor
 public class ServerPingManager {
 
   private final ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
-  private final ServerPingRepository serverPingRepository;
+  private final ConfigRepository configRepository;
 
   @Getter
   private ServerPingEntity serverPing;
@@ -23,7 +23,7 @@ public class ServerPingManager {
   public void setup() {
     executorService.scheduleAtFixedRate(() -> {
       try {
-        serverPing = serverPingRepository.get();
+        serverPing = configRepository.getServerPing();
       } catch (SQLException exception) {
         log.error("Failed to update serverPing", exception);
       }

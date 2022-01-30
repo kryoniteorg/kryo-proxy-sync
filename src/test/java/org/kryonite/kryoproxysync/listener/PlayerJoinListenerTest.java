@@ -11,6 +11,7 @@ import com.velocitypowered.api.proxy.Player;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.kryonite.kryoproxysync.maintenance.MaintenanceManager;
+import org.kryonite.kryoproxysync.playercount.PlayerCountManager;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -24,16 +25,35 @@ class PlayerJoinListenerTest {
   @Mock
   private MaintenanceManager maintenanceManagerMock;
 
+  @Mock
+  private PlayerCountManager playerCountManagerMock;
+
   @Test
   void shouldAllowLogin_WhenMaintenanceDisabled() {
     // Arrange
-    LoginEvent loginEvent = new LoginEvent(mock(Player.class));
+    Player player = mock(Player.class);
+    LoginEvent loginEvent = new LoginEvent(player);
+    when(playerCountManagerMock.canJoinServer(player)).thenReturn(true);
 
     // Act
     testee.onPlayerLogin(loginEvent);
 
     // Assert
     assertEquals(ResultedEvent.ComponentResult.allowed(), loginEvent.getResult());
+  }
+
+  @Test
+  void shouldDenyLogin_WhenMaintenanceDisabledAndServerFull() {
+    // Arrange
+    Player player = mock(Player.class);
+    LoginEvent loginEvent = new LoginEvent(player);
+    when(playerCountManagerMock.canJoinServer(player)).thenReturn(false);
+
+    // Act
+    testee.onPlayerLogin(loginEvent);
+
+    // Assert
+    assertFalse(loginEvent.getResult().isAllowed());
   }
 
   @Test

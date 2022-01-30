@@ -12,7 +12,7 @@ import org.awaitility.Awaitility;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.kryonite.kryoproxysync.persistence.entity.ServerPingEntity;
-import org.kryonite.kryoproxysync.persistence.repository.ServerPingRepository;
+import org.kryonite.kryoproxysync.persistence.repository.ConfigRepository;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -24,13 +24,13 @@ class ServerPingManagerTest {
   private ServerPingManager testee;
 
   @Mock
-  private ServerPingRepository serverPingRepositoryMock;
+  private ConfigRepository configRepositoryMock;
 
   @Test
   void shouldUpdateServerPing_WhenSetupIsCalled() throws SQLException {
     // Arrange
-    ServerPingEntity serverPingEntity = ServerPingEntity.create(1, "Test", List.of("Test", "12"));
-    when(serverPingRepositoryMock.get()).thenReturn(serverPingEntity);
+    ServerPingEntity serverPingEntity = ServerPingEntity.create(1, "Test", List.of("Test", "12"), 10);
+    when(configRepositoryMock.getServerPing()).thenReturn(serverPingEntity);
 
     // Act
     testee.setup();
@@ -38,15 +38,15 @@ class ServerPingManagerTest {
     // Assert
     Awaitility.await()
         .atMost(1, TimeUnit.SECONDS)
-        .untilAsserted(() -> verify(serverPingRepositoryMock).get());
+        .untilAsserted(() -> verify(configRepositoryMock).getServerPing());
     assertEquals(serverPingEntity, testee.getServerPing());
   }
 
   @Test
   void shouldUpdateServerPing_Every5Seconds() throws SQLException {
     // Arrange
-    ServerPingEntity serverPingEntity = ServerPingEntity.create(1, "Test", List.of("Test", "12"));
-    when(serverPingRepositoryMock.get()).thenReturn(serverPingEntity);
+    ServerPingEntity serverPingEntity = ServerPingEntity.create(1, "Test", List.of("Test", "12"), 10);
+    when(configRepositoryMock.getServerPing()).thenReturn(serverPingEntity);
 
     // Act
     testee.setup();
@@ -54,7 +54,7 @@ class ServerPingManagerTest {
     // Assert
     Awaitility.await()
         .atMost(6, TimeUnit.SECONDS)
-        .untilAsserted(() -> verify(serverPingRepositoryMock, times(2)).get());
+        .untilAsserted(() -> verify(configRepositoryMock, times(2)).getServerPing());
     assertEquals(serverPingEntity, testee.getServerPing());
   }
 }

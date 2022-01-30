@@ -21,14 +21,15 @@ import org.kryonite.kryomessaging.api.MessagingService;
 import org.kryonite.kryomessaging.service.DefaultActiveMqConnectionFactory;
 import org.kryonite.kryomessaging.service.DefaultMessagingService;
 import org.kryonite.kryoproxysync.command.MaintenanceCommand;
+import org.kryonite.kryoproxysync.command.MaxPlayerCountCommand;
 import org.kryonite.kryoproxysync.listener.PlayerJoinListener;
 import org.kryonite.kryoproxysync.listener.ProxyPingListener;
 import org.kryonite.kryoproxysync.maintenance.MaintenanceManager;
 import org.kryonite.kryoproxysync.messaging.MessagingController;
+import org.kryonite.kryoproxysync.persistence.repository.ConfigRepository;
 import org.kryonite.kryoproxysync.persistence.repository.MaintenanceRepository;
-import org.kryonite.kryoproxysync.persistence.repository.ServerPingRepository;
+import org.kryonite.kryoproxysync.persistence.repository.impl.MariaDbConfigRepository;
 import org.kryonite.kryoproxysync.persistence.repository.impl.MariaDbMaintenanceModeRepository;
-import org.kryonite.kryoproxysync.persistence.repository.impl.MariaDbServerPingRepository;
 import org.kryonite.kryoproxysync.playercount.PlayerCountManager;
 import org.kryonite.kryoproxysync.serverping.ServerPingManager;
 import org.mariadb.jdbc.Driver;
@@ -49,18 +50,18 @@ public class KryoProxySyncPlugin {
 
   @Subscribe
   public void onInitialize(ProxyInitializeEvent event) {
-    ServerPingRepository serverPingRepository;
+    ConfigRepository configRepository;
     MaintenanceRepository maintenanceRepository;
     try {
       setupHikariDataSource();
-      serverPingRepository = new MariaDbServerPingRepository(hikariDataSource);
+      configRepository = new MariaDbConfigRepository(hikariDataSource);
       maintenanceRepository = new MariaDbMaintenanceModeRepository(hikariDataSource);
     } catch (SQLException exception) {
       log.error("Failed to setup repositories", exception);
       return;
     }
 
-    PlayerCountManager playerCountManager = new PlayerCountManager();
+    PlayerCountManager playerCountManager = new PlayerCountManager(configRepository);
     MaintenanceManager maintenanceManager = new MaintenanceManager(server, maintenanceRepository);
 
     MessagingController messagingController;
@@ -71,10 +72,10 @@ public class KryoProxySyncPlugin {
       return;
     }
 
-    ServerPingManager serverPingManager = setupServerPingManager(serverPingRepository);
+    ServerPingManager serverPingManager = setupServerPingManager(configRepository);
 
     setupListener(playerCountManager, serverPingManager, maintenanceManager);
-    setupCommands(maintenanceRepository, messagingController);
+    setupCommands(maintenanceRepository, messagingController, configRepository);
   }
 
   private MessagingController setupMessagingController(PlayerCountManager playerCountManager,
@@ -96,6 +97,7 @@ public class KryoProxySyncPlugin {
         getEnv("SERVER_NAME")
     );
     messagingController.setupPlayerCountChanged();
+    messagingController.setupMaxPlayerCountChanged();
     messagingController.setupMaintenanceChanged();
 
     return messagingController;
@@ -119,8 +121,8 @@ public class KryoProxySyncPlugin {
     return connectionString;
   }
 
-  private ServerPingManager setupServerPingManager(ServerPingRepository serverPingRepository) {
-    ServerPingManager serverPingManager = new ServerPingManager(serverPingRepository);
+  private ServerPingManager setupServerPingManager(ConfigRepository configRepository) {
+    ServerPingManager serverPingManager = new ServerPingManager(configRepository);
     serverPingManager.setup();
     return serverPingManager;
   }
@@ -129,12 +131,17 @@ public class KryoProxySyncPlugin {
                              MaintenanceManager maintenanceManager) {
     EventManager eventManager = server.getEventManager();
     eventManager.register(this, new ProxyPingListener(playerCountManager, serverPingManager));
-    eventManager.register(this, new PlayerJoinListener(maintenanceManager));
+    eventManager.register(this, new PlayerJoinListener(maintenanceManager, playerCountManager));
   }
 
-  private void setupCommands(MaintenanceRepository maintenanceRepository, MessagingController messagingController) {
+  private void setupCommands(MaintenanceRepository maintenanceRepository, MessagingController messagingController,
+                             ConfigRepository configRepository) {
     CommandMeta maintenance = server.getCommandManager().metaBuilder("maintenance").build();
     server.getCommandManager().register(maintenance,
         new MaintenanceCommand(maintenanceRepository, messagingController));
+
+    CommandMeta maxPlayerCount = server.getCommandManager().metaBuilder("maxplayercount").build();
+    server.getCommandManager().register(maxPlayerCount,
+        new MaxPlayerCountCommand(configRepository, messagingController));
   }
 }
