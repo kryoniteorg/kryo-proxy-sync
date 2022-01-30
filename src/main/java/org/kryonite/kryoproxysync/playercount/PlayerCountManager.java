@@ -14,7 +14,7 @@ import org.kryonite.kryoproxysync.persistence.repository.ConfigRepository;
 public class PlayerCountManager {
 
   public static final String SET_MAX_PLAYER_COUNT_PERMISSIONS = "player.count.max";
-  private static final String BYPASS_MAX_PLAYER_COUNT_PERMISSIONS = "player.count.max.bypass";
+  protected static final String BYPASS_MAX_PLAYER_COUNT_PERMISSIONS = "player.count.max.bypass";
 
   private final Map<String, PlayerCountChanged> servers = new HashMap<>();
 
