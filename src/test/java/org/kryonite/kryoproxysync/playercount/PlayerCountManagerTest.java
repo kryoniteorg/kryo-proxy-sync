@@ -1,19 +1,41 @@
 package org.kryonite.kryoproxysync.playercount;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
-import org.junit.jupiter.api.BeforeEach;
+import com.velocitypowered.api.proxy.Player;
+import java.sql.SQLException;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.kryonite.kryoproxysync.messaging.message.MaxPlayerCountChanged;
 import org.kryonite.kryoproxysync.messaging.message.PlayerCountChanged;
+import org.kryonite.kryoproxysync.persistence.repository.ConfigRepository;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-
+@ExtendWith(MockitoExtension.class)
 class PlayerCountManagerTest {
 
   private PlayerCountManager testee;
 
-  @BeforeEach
-  void setup() {
-    testee = new PlayerCountManager();
+  @Mock
+  private ConfigRepository configRepositoryMock;
+
+  @Test
+  void shouldReadMaxPlayerCount() throws SQLException {
+    // Arrange
+    int maxPlayerCount = 0;
+
+    when(configRepositoryMock.getMaxPlayerCount()).thenReturn(maxPlayerCount);
+
+    // Act
+    testee = new PlayerCountManager(configRepositoryMock);
+
+    // Assert
+    assertFalse(testee.canJoinServer(mock(Player.class)));
   }
 
   @Test
@@ -21,6 +43,7 @@ class PlayerCountManagerTest {
     // Arrange
     int count = 5;
     PlayerCountChanged playerCountChanged = new PlayerCountChanged(count, "test", System.currentTimeMillis());
+    testee = new PlayerCountManager(configRepositoryMock);
 
     // Act
     testee.updatePlayerCount(playerCountChanged);
@@ -36,6 +59,7 @@ class PlayerCountManagerTest {
     int count2 = 5;
     PlayerCountChanged playerCountChanged1 = new PlayerCountChanged(count1, "test1", System.currentTimeMillis());
     PlayerCountChanged playerCountChanged2 = new PlayerCountChanged(count2, "test2", System.currentTimeMillis());
+    testee = new PlayerCountManager(configRepositoryMock);
 
     // Act
     testee.updatePlayerCount(playerCountChanged1);
@@ -52,6 +76,7 @@ class PlayerCountManagerTest {
     int count2 = 6;
     PlayerCountChanged playerCountChanged1 = new PlayerCountChanged(count1, "test1", System.currentTimeMillis() - 8000);
     PlayerCountChanged playerCountChanged2 = new PlayerCountChanged(count2, "test2", System.currentTimeMillis());
+    testee = new PlayerCountManager(configRepositoryMock);
 
     // Act
     testee.updatePlayerCount(playerCountChanged1);
@@ -59,5 +84,20 @@ class PlayerCountManagerTest {
 
     // Assert
     assertEquals(count2, testee.getPlayerCount());
+  }
+
+  @Test
+  void shouldUpdateMaxPlayerCount() throws SQLException {
+    // Arrange
+    int maxPlayerCount = 0;
+
+    when(configRepositoryMock.getMaxPlayerCount()).thenReturn(maxPlayerCount);
+    testee = new PlayerCountManager(configRepositoryMock);
+
+    // Act
+    testee.updateMaxPlayerCount(new MaxPlayerCountChanged(10));
+
+    // Assert
+    assertTrue(testee.canJoinServer(mock(Player.class)));
   }
 }

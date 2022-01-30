@@ -41,7 +41,7 @@ class ProxyPingListenerTest {
         .build();
     ProxyPingEvent proxyPingEvent = new ProxyPingEvent(mock(InboundConnection.class), serverPing);
 
-    ServerPingEntity serverPingEntity = ServerPingEntity.create(1, "Test", List.of("Hello", "World"));
+    ServerPingEntity serverPingEntity = ServerPingEntity.create(1, "Test", List.of("Hello", "World"), 10);
 
     when(playerCountManagerMock.getPlayerCount()).thenReturn(playerCount);
     when(serverPingManagerMock.getServerPing()).thenReturn(serverPingEntity);

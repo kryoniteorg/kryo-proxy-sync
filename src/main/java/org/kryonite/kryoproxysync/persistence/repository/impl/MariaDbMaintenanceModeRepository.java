@@ -54,8 +54,7 @@ public class MariaDbMaintenanceModeRepository implements MaintenanceRepository {
          PreparedStatement preparedStatement = connection.prepareStatement(UPDATE_MAINTENANCE)) {
       preparedStatement.setBoolean(1, enabled);
 
-      int i = preparedStatement.executeUpdate();
-      log.info("Updated rows: " + i);
+      preparedStatement.executeUpdate();
     }
   }
 }

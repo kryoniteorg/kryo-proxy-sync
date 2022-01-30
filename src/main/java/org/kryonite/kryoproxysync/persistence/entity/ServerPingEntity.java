@@ -9,4 +9,5 @@ public class ServerPingEntity {
   private final int id;
   private final String description;
   private final List<String> samplePlayers;
+  private final int maxPlayerCount;
 }

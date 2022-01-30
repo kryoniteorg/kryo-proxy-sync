@@ -22,7 +22,8 @@ public class ProxyPingListener {
 
     ServerPing.Builder serverPingBuilder = event.getPing().asBuilder()
         .onlinePlayers(playerCountManager.getPlayerCount())
-        .description(Component.text(serverPingEntity.getDescription()));
+        .description(Component.text(serverPingEntity.getDescription()))
+        .maximumPlayers(serverPingEntity.getMaxPlayerCount());
 
     if (!serverPingEntity.getSamplePlayers().isEmpty()) {
       serverPingBuilder.samplePlayers(serverPingEntity.getSamplePlayers().stream()
