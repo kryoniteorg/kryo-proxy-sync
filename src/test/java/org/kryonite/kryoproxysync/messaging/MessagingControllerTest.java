@@ -1,6 +1,7 @@
 package org.kryonite.kryoproxysync.messaging;
 
 import static org.kryonite.kryoproxysync.messaging.MessagingController.MAINTENANCE_CHANGED_EXCHANGE;
+import static org.kryonite.kryoproxysync.messaging.MessagingController.MAX_PLAYER_COUNT_CHANGED_EXCHANGE;
 import static org.kryonite.kryoproxysync.messaging.MessagingController.PLAYER_COUNT_CHANGED_EXCHANGE;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -20,6 +21,7 @@ import org.kryonite.kryoproxysync.maintenance.MaintenanceManager;
 import org.kryonite.kryoproxysync.messaging.consumer.MaintenanceChangedConsumer;
 import org.kryonite.kryoproxysync.messaging.consumer.PlayerCountChangedConsumer;
 import org.kryonite.kryoproxysync.messaging.message.MaintenanceChanged;
+import org.kryonite.kryoproxysync.messaging.message.MaxPlayerCountChanged;
 import org.kryonite.kryoproxysync.messaging.message.PlayerCountChanged;
 import org.kryonite.kryoproxysync.playercount.PlayerCountManager;
 import org.mockito.Answers;
@@ -99,5 +101,18 @@ class MessagingControllerTest {
     // Assert
     verify(messagingServiceMock).sendMessage(Message.create(MAINTENANCE_CHANGED_EXCHANGE,
         new MaintenanceChanged(maintenance)));
+  }
+
+  @Test
+  void shouldSendMaxPlayerCountChanged() {
+    // Arrange
+    int count = 5;
+
+    // Act
+    testee.sendMaxPlayerCountChanged(count);
+
+    // Assert
+    verify(messagingServiceMock).sendMessage(Message.create(MAX_PLAYER_COUNT_CHANGED_EXCHANGE,
+        new MaxPlayerCountChanged(count)));
   }
 }

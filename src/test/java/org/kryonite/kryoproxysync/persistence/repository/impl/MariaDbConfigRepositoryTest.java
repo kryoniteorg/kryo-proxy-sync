@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.kryonite.kryoproxysync.persistence.repository.impl.MariaDbConfigRepository.CREATE_CONFIG_TABLE;
 import static org.kryonite.kryoproxysync.persistence.repository.impl.MariaDbConfigRepository.GET_CONFIG;
 import static org.kryonite.kryoproxysync.persistence.repository.impl.MariaDbConfigRepository.INSERT_INITIAL_ENTRY;
+import static org.kryonite.kryoproxysync.persistence.repository.impl.MariaDbConfigRepository.UPDATE_MAX_PLAYER_COUNT;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -76,5 +77,20 @@ class MariaDbConfigRepositoryTest {
 
     // Assert
     assertEquals(serverPingEntity, result);
+  }
+
+  @Test
+  void shouldSetMaxPlayerCount() throws SQLException {
+    // Arrange
+    int count = 6;
+
+    MariaDbConfigRepository testee = new MariaDbConfigRepository(dataSource);
+
+    // Act
+    testee.setMaxPlayerCount(count);
+
+    // Assert
+    verify(dataSource.getConnection().prepareStatement(UPDATE_MAX_PLAYER_COUNT)).setInt(1, count);
+    verify(dataSource.getConnection().prepareStatement(UPDATE_MAX_PLAYER_COUNT)).executeUpdate();
   }
 }

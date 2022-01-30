@@ -87,6 +87,20 @@ class PlayerCountManagerTest {
   }
 
   @Test
+  void shouldJoinServerWithSpecificPermission() {
+    // Arrange
+    testee = new PlayerCountManager(configRepositoryMock);
+    Player player = mock(Player.class);
+    when(player.hasPermission(PlayerCountManager.BYPASS_MAX_PLAYER_COUNT_PERMISSIONS)).thenReturn(true);
+
+    // Act
+    boolean result = testee.canJoinServer(player);
+
+    // Assert
+    assertTrue(result);
+  }
+
+  @Test
   void shouldUpdateMaxPlayerCount() throws SQLException {
     // Arrange
     int maxPlayerCount = 0;
