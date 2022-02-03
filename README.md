@@ -6,7 +6,7 @@
 
 <h1 align="center">kryo-proxy-sync</h1>
 <div align="center">
-    A Discord bot to whitelist players on <a href="https://github.com/PaperMC/Velocity">Velocity</a> with multi-proxy support.
+    A plugin to sync proxy information over multiple <a href="https://github.com/PaperMC/Velocity">Velocity</a> proxies.
     <br />
     <br />
     <a href="https://github.com/kryoniteorg/kryo-proxy-sync/issues/new?assignees=&labels=bug&template=bug_report.md">Report Bug</a>
