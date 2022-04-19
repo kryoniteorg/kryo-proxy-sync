@@ -40,7 +40,7 @@ allprojects {
 
         testImplementation("org.junit.jupiter:junit-jupiter-api:$junitVersion")
         testImplementation("org.junit.jupiter:junit-jupiter-engine:$junitVersion")
-        testImplementation("org.mockito:mockito-junit-jupiter:4.4.0")
+        testImplementation("org.mockito:mockito-junit-jupiter:4.5.0")
         testImplementation("org.awaitility:awaitility:4.2.0")
     }
 
