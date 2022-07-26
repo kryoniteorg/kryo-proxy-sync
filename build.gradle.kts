@@ -25,7 +25,7 @@ allprojects {
     }
 
     dependencies {
-        val junitVersion = "5.8.2"
+        val junitVersion = "5.9.0"
         val velocityVersion = "3.1.0"
 
         implementation("com.github.kryoniteorg:kryo-messaging:2.0.1")
